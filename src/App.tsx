@@ -113,6 +113,22 @@ export default function App() {
 
   useEffect(() => { if (admin) void refreshSection(); }, [admin, refreshSection]);
 
+  async function setUserBlocked(row: Record<string, unknown>, blocked: boolean) {
+    if (!supabase || !admin || (!hasPermission("manage_users") && admin.role !== "super_admin" && !hasPermission("*"))) {
+      setMessage("Your administrator role does not permit account status changes."); return;
+    }
+    const userId = String(row.user_id ?? "");
+    if (!userId) { setMessage("User ID is missing from this search result."); return; }
+    const reason = window.prompt("Enter the required audit reason for " + (blocked ? "blocking" : "unblocking") + " this account:");
+    if (!reason || reason.trim().length < 5) { setMessage("Action cancelled. Enter a reason of at least 5 characters."); return; }
+    if (!window.confirm("Confirm " + (blocked ? "block" : "unblock") + " for user " + userId + "?")) return;
+    setLoading(true); setMessage("");
+    const { error } = await supabase.rpc("admin_set_user_block", { p_user_id: userId, p_blocked: blocked, p_reason: reason.trim() });
+    setLoading(false);
+    if (error) setMessage("Account status change failed: " + error.message);
+    else { setMessage("Account status updated by the protected database function."); await refreshSection(); }
+  }
+
   async function runTransactionAction(row: Record<string, unknown>, action: "approve" | "reject" | "settle") {
     if (!supabase || !admin || !hasPermission("manage_transactions") && !hasPermission("approve_transactions") && !hasPermission("*")) {
       setMessage("Your administrator role does not permit transaction actions."); return;
@@ -153,7 +169,7 @@ export default function App() {
     {admin && message && <div role="alert" className="error-banner">{message}</div>}
     {admin && section==="overview" && <section className="metric-grid">{metrics.map(m=><article className="metric" key={m.label}><span>{m.label}</span><strong>{m.value}</strong><small>{m.detail}</small></article>)}</section>}
     {admin && ["users","deposits","withdrawals","investments","plans","audit"].includes(section) && <section className="panel"><div className="panel-head"><div><h2>{sections.find(n=>n.id===section)?.label}</h2><p>Live database records · values are displayed only when database policies allow access.</p></div><div className="list-actions">{(section==="users") && <input aria-label="Search users" value={query} placeholder="Search users…" onChange={e=>setQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")void refreshSection();}}/>}<button className="ghost" onClick={()=>void refreshSection()} disabled={loading}><RefreshCw size={14}/> Load</button></div></div>
-    {loading?<div className="empty-state">Loading from Supabase…</div>:rows.length===0?<div className="empty-state">No records to display, or access was restricted. Check the message above and confirm the admin role and RLS policies.</div>:<div className="table-wrap"><table><thead><tr>{Object.keys(rows[0]).map(key=><th key={key}>{key.replaceAll("_"," ")}</th>)}{(section==="deposits"||section==="withdrawals")&&<th>Actions</th>}</tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id??row.user_id??i)}>{Object.entries(row).map(([key,value])=><td key={key}>{value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value)}</td>)}{(section==="deposits"||section==="withdrawals")&&<td><div className="row-actions"><button className="action approve" disabled={loading} onClick={()=>void runTransactionAction(row,"approve")}>Approve</button><button className="action reject" disabled={loading} onClick={()=>void runTransactionAction(row,"reject")}>Reject</button>{section==="withdrawals"&&<button className="action settle" disabled={loading} onClick={()=>void runTransactionAction(row,"settle")}>Settle</button>}</div></td>}</tr>)}</tbody></table></div>}</section>}
+    {loading?<div className="empty-state">Loading from Supabase…</div>:rows.length===0?<div className="empty-state">No records to display, or access was restricted. Check the message above and confirm the admin role and RLS policies.</div>:<div className="table-wrap"><table><thead><tr>{Object.keys(rows[0]).map(key=><th key={key}>{key.replaceAll("_"," ")}</th>)}{(section==="deposits"||section==="withdrawals"||section==="users")&&<th>Actions</th>}</tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id??row.user_id??i)}>{Object.entries(row).map(([key,value])=><td key={key}>{value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value)}</td>)}{(section==="deposits"||section==="withdrawals")&&<td><div className="row-actions"><button className="action approve" disabled={loading} onClick={()=>void runTransactionAction(row,"approve")}>Approve</button><button className="action reject" disabled={loading} onClick={()=>void runTransactionAction(row,"reject")}>Reject</button>{section==="withdrawals"&&<button className="action settle" disabled={loading} onClick={()=>void runTransactionAction(row,"settle")}>Settle</button>}</div></td>}{section==="users"&&<td><div className="row-actions"><button className="action reject" disabled={loading} onClick={()=>void setUserBlocked(row,true)}>Block</button><button className="action approve" disabled={loading} onClick={()=>void setUserBlocked(row,false)}>Unblock</button></div></td>}</tr>)}</tbody></table></div>}</section>}
     {admin && section==="overview" && <section className="warning info"><ShieldCheck size={20}/><div><strong>Financial operations are protected by server-side RPCs</strong><p>Deposit and withdrawal approval, rejection, and settlement call existing database RPCs with a mandatory reason. Other financial controls remain disabled until their dedicated RPCs and end-to-end safeguards are verified.</p></div></section>}
     <footer>Authenticated user: {userEmail} · {admin ? "Admin authorization checked" : "Admin authorization not granted"} · Any financial action is performed only by the protected database RPC invoked by an authorized administrator.</footer></main></div>;
 }
