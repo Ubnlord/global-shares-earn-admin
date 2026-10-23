@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Activity, ArrowDownToLine, ArrowUpFromLine, ClipboardCheck, LayoutDashboard, LogOut, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 
-type Section = "overview" | "users" | "deposits" | "withdrawals" | "investments" | "plans" | "audit";
+type Section = "overview" | "users" | "deposits" | "withdrawals" | "investments" | "plans" | "profit" | "audit";
 type AdminIdentity = { id: string; user_id: string; role: string; permissions: string[] };
 type Metric = { label: string; value: string; detail: string };
 const sections: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
@@ -12,6 +12,7 @@ const sections: { id: Section; label: string; icon: typeof LayoutDashboard }[] =
   { id: "withdrawals", label: "Withdrawals", icon: ArrowUpFromLine },
   { id: "investments", label: "Investments", icon: Activity },
   { id: "plans", label: "Plans", icon: ClipboardCheck },
+  { id: "profit", label: "Manual profit", icon: Activity },
   { id: "audit", label: "Audit log", icon: ShieldCheck },
 ];
 
@@ -28,6 +29,8 @@ export default function App() {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [colorMode, setColorMode] = useState<"light" | "dark">("light");
+  const [profitUserId, setProfitUserId] = useState("");
+  const [profitReason, setProfitReason] = useState("");
 
   const verifyAdmin = useCallback(async () => {
     if (!supabase) return;
@@ -113,6 +116,21 @@ export default function App() {
 
   useEffect(() => { if (admin) void refreshSection(); }, [admin, refreshSection]);
 
+  async function creditDailyProfit(event: FormEvent) {
+    event.preventDefault();
+    if (!supabase || !admin || (!hasPermission("manage_users") && admin.role !== "super_admin" && !hasPermission("*"))) {
+      setMessage("Your administrator role does not permit manual profit credits."); return;
+    }
+    if (!profitUserId.trim() || profitReason.trim().length < 5) { setMessage("Enter a user UUID and a reason of at least 5 characters."); return; }
+    const confirmed = window.confirm("This existing RPC credits one calculated daily profit for every eligible active USD investment belonging to this user for the current UTC date. It does not accept a per-investment amount/date. Continue?");
+    if (!confirmed) return;
+    setLoading(true); setMessage("");
+    const { data, error } = await supabase.rpc("admin_add_daily_investment_profit", { p_user_id: profitUserId.trim(), p_reason: profitReason.trim() });
+    setLoading(false);
+    if (error) setMessage("Profit credit failed: " + error.message);
+    else setMessage("RPC result: " + JSON.stringify(data) + ". Review the audit log and user ledger before any further action.");
+  }
+
   async function setUserBlocked(row: Record<string, unknown>, blocked: boolean) {
     if (!supabase || !admin || (!hasPermission("manage_users") && admin.role !== "super_admin" && !hasPermission("*"))) {
       setMessage("Your administrator role does not permit account status changes."); return;
@@ -167,6 +185,7 @@ export default function App() {
   return <div className={colorMode === "dark" ? "layout dark" : "layout"}><aside className="sidebar"><Brand/>{sections.map(item=><button key={item.id} className={section===item.id?"nav active":"nav"} onClick={()=>{setSection(item.id);setRows([]);setMessage("");}}><item.icon size={18}/>{item.label}</button>)}<div className="sidebar-bottom"><span className="muted small">{userEmail}<br/>{admin ? admin.role : "Authorization pending"}</span><button className="nav" onClick={signOut}><LogOut size={18}/> Sign out</button></div></aside><main className="workspace"><header><div><p className="eyebrow">GLOBAL SHARES EARN</p><h1>{sections.find(n=>n.id===section)?.label}</h1><p className="subhead">USD accounting · verified session permissions</p></div><div className="header-actions"><button className="ghost" onClick={()=>setColorMode(v=>v==="light"?"dark":"light")}>{colorMode==="light"?"Dark mode":"Light mode"}</button><button className="ghost" onClick={()=>void refreshSection()} disabled={loading}><RefreshCw size={15}/> Refresh</button></div></header>
     {!admin && <section className="warning"><ShieldCheck size={20}/><div><strong>Admin access not verified</strong><p>{message || "No administrative data is being shown."}</p></div></section>}
     {admin && message && <div role="alert" className="error-banner">{message}</div>}
+    {admin && section==="profit" && <section className="panel"><div className="panel-head"><div><h2>Manual daily investment profit</h2><p>Uses the existing server-side RPC; this is not a per-investment amount/date workflow.</p></div></div><form className="operation-form" onSubmit={creditDailyProfit}><label>User ID (UUID)<input value={profitUserId} onChange={e=>setProfitUserId(e.target.value)} placeholder="Target user's UUID" required /></label><label>Reason for audit trail<textarea value={profitReason} onChange={e=>setProfitReason(e.target.value)} minLength={5} placeholder="Explain why this daily credit is being applied" required /></label><div className="warning"><ShieldCheck size={18}/><div><strong>Important behavior</strong><p>The existing RPC calculates credits for all eligible active USD investments for this user on the current UTC date, with duplicate protection. It cannot select one investment, choose a custom amount, or backdate a profit date. Do not use it if those are required.</p></div></div><button className="primary" disabled={loading || (!hasPermission("manage_users") && admin.role!=="super_admin" && !hasPermission("*"))}>{loading?"Processing…":"Preview policy and credit via protected RPC"}</button></form></section>}
     {admin && section==="overview" && <section className="metric-grid">{metrics.map(m=><article className="metric" key={m.label}><span>{m.label}</span><strong>{m.value}</strong><small>{m.detail}</small></article>)}</section>}
     {admin && ["users","deposits","withdrawals","investments","plans","audit"].includes(section) && <section className="panel"><div className="panel-head"><div><h2>{sections.find(n=>n.id===section)?.label}</h2><p>Live database records · values are displayed only when database policies allow access.</p></div><div className="list-actions">{(section==="users") && <input aria-label="Search users" value={query} placeholder="Search users…" onChange={e=>setQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")void refreshSection();}}/>}<button className="ghost" onClick={()=>void refreshSection()} disabled={loading}><RefreshCw size={14}/> Load</button></div></div>
     {loading?<div className="empty-state">Loading from Supabase…</div>:rows.length===0?<div className="empty-state">No records to display, or access was restricted. Check the message above and confirm the admin role and RLS policies.</div>:<div className="table-wrap"><table><thead><tr>{Object.keys(rows[0]).map(key=><th key={key}>{key.replaceAll("_"," ")}</th>)}{(section==="deposits"||section==="withdrawals"||section==="users")&&<th>Actions</th>}</tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id??row.user_id??i)}>{Object.entries(row).map(([key,value])=><td key={key}>{value===null||value===undefined?"—":typeof value==="object"?JSON.stringify(value):String(value)}</td>)}{(section==="deposits"||section==="withdrawals")&&<td><div className="row-actions"><button className="action approve" disabled={loading} onClick={()=>void runTransactionAction(row,"approve")}>Approve</button><button className="action reject" disabled={loading} onClick={()=>void runTransactionAction(row,"reject")}>Reject</button>{section==="withdrawals"&&<button className="action settle" disabled={loading} onClick={()=>void runTransactionAction(row,"settle")}>Settle</button>}</div></td>}{section==="users"&&<td><div className="row-actions"><button className="action reject" disabled={loading} onClick={()=>void setUserBlocked(row,true)}>Block</button><button className="action approve" disabled={loading} onClick={()=>void setUserBlocked(row,false)}>Unblock</button></div></td>}</tr>)}</tbody></table></div>}</section>}
