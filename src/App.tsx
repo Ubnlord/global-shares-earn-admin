@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Activity, ArrowDownToLine, ArrowUpFromLine, ClipboardCheck, LayoutDashboard, LogOut, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { supabase, supabaseConfigured } from "./lib/supabase";
 
