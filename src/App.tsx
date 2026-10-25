@@ -33,17 +33,19 @@ export default function App() {
   const [profitUserId, setProfitUserId] = useState("");
   const [profitReason, setProfitReason] = useState("");
 
-  const verifyAdmin = useCallback(async () => {
+  const verifyAdminForUser = useCallback(async (user: { id: string; email?: string } | null) => {
     if (!supabase) return;
-    const { data: userResult } = await supabase.auth.getUser();
-    if (!userResult.user) {
-      setUserEmail(null); setAdmin(null); setRows([]); setMetrics([]); return;
+    if (!user) {
+      setUserEmail(null); setAdmin(null); setRows([]); setMetrics([]); setMessage("");
+      return;
     }
-    setUserEmail(userResult.user.email ?? "Authenticated administrator");
-    const { data, error } = await supabase.from("admin_user").select("id,user_id,role,permissions").eq("user_id", userResult.user.id).maybeSingle();
+    setUserEmail(user.email ?? "Authenticated administrator");
+    const { data, error } = await supabase.from("admin_user").select("id,user_id,role,permissions").eq("user_id", user.id).maybeSingle();
     if (error || !data) {
       setAdmin(null);
-      setMessage("Your login is valid, but this account is not registered as an administrator. No administrative data or actions are enabled.");
+      setMessage(error
+        ? "Unable to verify administrator access: " + error.message
+        : "Your login is valid, but this account is not registered as an administrator. No administrative data or actions are enabled.");
       setRows([]); setMetrics([]);
       return;
     }
@@ -51,12 +53,28 @@ export default function App() {
     setMessage("");
   }, []);
 
+  const verifyAdmin = useCallback(async () => {
+    if (!supabase) return;
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      setMessage("Could not restore the saved session. Please sign in again.");
+      return;
+    }
+    await verifyAdminForUser(data.session?.user ? { id: data.session.user.id, email: data.session.user.email } : null);
+  }, [verifyAdminForUser]);
+
   useEffect(() => {
     if (!supabase) return;
     void verifyAdmin();
-    const { data } = supabase.auth.onAuthStateChange(() => { void verifyAdmin(); });
+    // Do not call Supabase auth methods from inside onAuthStateChange: doing so can
+    // deadlock the auth lock during INITIAL_SESSION and make a page refresh appear to sign out.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      window.setTimeout(() => {
+        void verifyAdminForUser(session?.user ? { id: session.user.id, email: session.user.email } : null);
+      }, 0);
+    });
     return () => data.subscription.unsubscribe();
-  }, [verifyAdmin]);
+  }, [verifyAdmin, verifyAdminForUser]);
 
   const hasPermission = (permission: string) => !!admin && (admin.permissions.includes("*") || admin.permissions.includes(permission));
   const canViewUsers = hasPermission("manage_users") || hasPermission("view_users") || admin?.role === "super_admin";
