@@ -111,7 +111,17 @@ export default function App() {
     } catch (err) {
       setRows([]);
       setMetrics([]);
-      setMessage(err instanceof Error ? err.message : "Unable to load this section safely.");
+      // Supabase/PostgREST errors are plain objects in some runtime paths, not always Error instances.
+      // Surface their safe message/code so the actual schema or policy failure can be diagnosed.
+      const detail = err && typeof err === "object"
+        ? ("message" in err && typeof err.message === "string" ? err.message
+          : "details" in err && typeof err.details === "string" ? err.details
+          : "hint" in err && typeof err.hint === "string" ? err.hint
+          : "code" in err && typeof err.code === "string" ? "Database error (" + err.code + ")"
+          : "")
+        : typeof err === "string" ? err : "";
+      setMessage(detail || "Unable to load this section. Tap Load again; if it persists, check the Supabase schema and row-level security policies.");
+      console.error("Admin section load failed", { section, error: err });
     } finally { setLoading(false); }
   }, [admin, section, query, canViewUsers, canViewTransactions, canViewAudit]);
 
