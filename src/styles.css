@@ -9,3 +9,24 @@
 .row-actions{display:flex;gap:6px;align-items:center}.action{border:1px solid transparent;border-radius:7px;padding:7px 9px;font-size:11px;font-weight:700;white-space:nowrap}.action:disabled{opacity:.5}.action.approve{background:#e4f7ee;color:#08764f;border-color:#bce8d5}.action.reject{background:#fff0ee;color:#a83228;border-color:#f2c8c2}.action.settle{background:#eaf1ff;color:#234f9b;border-color:#cbd9f7}.dark .action.approve{background:#143c31;color:#91e2c0;border-color:#286b54}.dark .action.reject{background:#482522;color:#ffb1a8;border-color:#793a34}.dark .action.settle{background:#1e3156;color:#b4ccff;border-color:#324e7d}
 
 .operation-form{display:grid;gap:16px;padding:20px;max-width:760px}.operation-form label{display:grid;gap:7px;font-size:13px;font-weight:600;color:#34435a}.operation-form input,.operation-form textarea{width:100%;border:1px solid #d5deeb;border-radius:10px;padding:12px;font:inherit;font-weight:400}.operation-form textarea{min-height:100px;resize:vertical}.dark .operation-form label{color:#dce7f7}.dark .operation-form input,.dark .operation-form textarea{background:#111c2d;border-color:#34455d;color:#e4ebf5}
+
+
+/* Mobile navigation: keep the workspace full-width and open the sidebar on demand. */
+.mobile-topbar{display:none}
+.mobile-menu-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 13px;border:1px solid #2c3c54;border-radius:10px;background:#17243a;color:#e4ebf5;font-weight:700}
+.mobile-menu-button span{font-size:13px}
+@media(max-width:760px){
+  .layout{display:flex;flex-direction:column;min-width:0}
+  .mobile-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#0c1934;border-bottom:1px solid #283754}
+  .mobile-topbar .brand{margin:0;color:#fff;gap:10px}
+  .mobile-topbar .brand-mark{width:38px;height:38px}
+  .mobile-topbar .brand small{color:#98a7c0}
+  .sidebar{display:none;min-height:0;width:100%;padding:12px;background:#0c1934}
+  .sidebar.mobile-open{display:flex}
+  .sidebar .desktop-brand{display:none}
+  .sidebar>.nav{display:flex;width:100%;padding:12px;font-size:14px;margin:2px 0}
+  .sidebar-bottom{margin-top:12px;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .sidebar-bottom .small{max-width:58%;padding:0 8px}
+  .workspace{width:100%;max-width:none;padding:22px 16px}
+  .workspace header{align-items:flex-start;flex-direction:column}
+}
