@@ -45,3 +45,65 @@
   .sidebar-bottom{padding-bottom:12px}
   .workspace{padding-top:22px}
 }
+
+
+/* Global Beldex-inspired mobile operations dashboard; USD accounting is unchanged. */
+:root{color-scheme:light}
+.layout{background:#f4f7fb}
+.dark.layout{background:#071321;color:#d9e4f2}
+.dark .workspace{padding-top:26px}
+.dark .mobile-topbar,.dark .sidebar{background:#0c1e37;border-color:#1a3049}
+.dark .workspace .eyebrow{color:#6384a7;letter-spacing:.18em}
+.dark .workspace .subhead{color:#8395aa}
+.dark .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dark .metric{background:#0b1929;border-color:#1b2d43;border-radius:16px;box-shadow:none;min-height:132px}
+.dark .metric span,.dark .metric small{color:#8192a8}
+.dark .metric strong{font-size:26px;margin:9px 0;color:#e2ebf6}
+.dark .panel{background:#0b1929;border-color:#1b2d43;border-radius:16px;box-shadow:none}
+.dark .panel-head{padding:16px;border-color:#1b2d43}
+.dark .panel-head h2{font-size:16px}
+.dark .panel-head p{color:#8092a8}
+.dark th{background:#0b1929;color:#637891}
+.dark td{color:#b8c8da;border-color:#17283b}
+.dark th,.dark td{padding:13px 12px}
+.dark .table-wrap{scrollbar-color:#30445c #0b1929}
+.dark .empty-state{min-height:170px;background:#0b1929;border-color:#20354b;color:#8194aa}
+.dark .error-banner{background:#291c26;border-color:#50303c;color:#f0a5a9}
+.dark .warning.info{background:#102a2a;border-color:#1b4946;color:#8fd8c8}
+.dark .warning.info p{color:#a5c6c5}
+.dark .operation-form .warning{background:#211f1a;border-color:#51472b;color:#e2c878}
+.dark .operation-form .warning p{color:#b6ad91}
+.refresh-status{display:inline-flex;align-items:center;gap:8px;color:#8192a8;font-size:12px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#36c99a;box-shadow:0 0 0 3px #36c99a20}
+.desktop-theme-button{white-space:nowrap}
+.dark .sidebar .nav{color:#aebfd3}
+.dark .sidebar .nav.active{background:#17304d;color:#eef6ff}
+.dark .sidebar .nav.active svg{color:#39c9a0}
+@media(max-width:760px){
+ .dark .workspace{padding:20px 16px 28px}
+ .dark .workspace header{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px}
+ .dark .workspace header h1{font-size:27px}
+ .dark .header-actions{justify-content:flex-end}
+ .dark .desktop-theme-button{display:none}
+ .dark .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+ .dark .metric{padding:14px;min-height:116px}
+ .dark .metric strong{font-size:22px;overflow-wrap:anywhere}
+ .dark .panel{overflow:hidden}
+ .dark .panel-head{gap:12px}
+ .dark .list-actions input{background:#0b1929;border-color:#243951;color:#e4edf7}
+ .dark .operation-form{padding:16px}
+ .dark .mobile-topbar{position:sticky;top:0;z-index:40;min-height:70px}
+ .dark .mobile-header-actions{gap:6px}
+ .dark .mobile-topbar .header-theme-button{padding:9px 10px}
+ .dark .mobile-topbar .mobile-menu-button{padding:9px 10px}
+ .dark .sidebar{position:absolute;top:70px;left:0;right:0;z-index:35;width:100%;max-height:calc(100dvh - 90px);overflow:auto;border-bottom:1px solid #20354b;box-shadow:0 18px 35px #0007}
+ .dark .sidebar.mobile-open{display:flex}
+}
+@media(max-width:360px){
+ .dark .mobile-topbar .brand small{display:none}
+ .dark .mobile-topbar .brand{gap:7px}
+ .dark .mobile-topbar .brand-mark{width:34px;height:34px}
+ .dark .mobile-topbar .header-theme-button span{display:none}
+ .dark .metric{padding:11px}
+ .dark .metric strong{font-size:20px}
+}
