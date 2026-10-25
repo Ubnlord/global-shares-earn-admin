@@ -231,4 +231,4 @@ export default function App() {
     {admin && section==="overview" && <section className="warning info"><ShieldCheck size={20}/><div><strong>Financial operations are protected by server-side RPCs</strong><p>Deposit and withdrawal approval, rejection, and settlement call existing database RPCs with a mandatory reason. Other financial controls remain disabled until their dedicated RPCs and end-to-end safeguards are verified.</p></div></section>}
     <footer>Authenticated user: {userEmail} · {admin ? "Admin authorization checked" : "Admin authorization not granted"} · Any financial action is performed only by the protected database RPC invoked by an authorized administrator.</footer></main></div>;
 }
-function Brand() { return <div className="brand"><div className="brand-mark">G</div><div><strong>GSE <span>ADMIN</span></strong><small>Secure operations</small></div></div>; }
+function Brand() { return <div className="brand"><div className="brand-mark brand-logo"><img src="https://global-beldex.com/gse-logo.jpg" alt="Global Shares Earn" /></div><div><strong>GLOBAL SHARES <span>EARN</span></strong><small>Secure operations</small></div></div>; }
