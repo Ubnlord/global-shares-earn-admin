@@ -29,7 +29,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
-  const [colorMode, setColorMode] = useState<"light" | "dark">("light");
+  const [colorMode, setColorMode] = useState<"light" | "dark">("dark");
   const [profitUserId, setProfitUserId] = useState("");
   const [profitReason, setProfitReason] = useState("");
 
